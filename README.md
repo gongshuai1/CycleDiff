@@ -21,7 +21,7 @@ $conda create --name CycleDiff python==3.7
 $conda activate CycleDiff
 $pip install -e .
 ```
- 2.Create a checkpoints dictionary and download [the pretrained diffusion model]() and [multi-attribute classifier]() to this folder.
+ 2.Create a checkpoints dictionary and download [the pretrained diffusion model](https://drive.google.com/file/d/1_n1uUfC9muDNYzWKgPsreKPSY-v7GmOS/view?usp=sharing) and [multi-attribute classifier](https://drive.google.com/file/d/1BwVpstO7y19bJw8OFpmTL-ewfRF1y-0D/view?usp=sharing) to this folder.
 
 ### Image manipulate
 Before modify image, you should set image_index and attribute_index in **optimization/attribute_editor.py**.
