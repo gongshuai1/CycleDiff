@@ -7,7 +7,7 @@ Pytorch implementation of **CycleDiff: Facial Semantic Editing Based on Diffusio
 
 > Abstract: As a class of generative models, diffusion model has attracted tremendous attention in recent years. Diffusion
 models are able to synthesize near photo-realistic images. While applied to image editing task, most of methods based
-on diffusion model either explicitly introduce a mask for user input during diffusion inference or generate mask before editing and can not achieve attribute-level control. In this paper, we propose CycleDiff, a novel approach to facial semantic editing based on diffusion model. A multiattribute classifier is used to ensure the consistency of the
+on diffusion model either explicitly introduce a mask for user input during diffusion inference or generate mask before editing and can not achieve attribute-level control. In this paper, we propose CycleDiff, a novel approach to facial semantic editing based on diffusion model. A multi-attribute classifier is used to ensure the consistency of the
 target attribute, and the high-level semantic consistency of the non-target attribute between the edited image and the
 input image is insured by introducing cycle consistency constraint into the inference process. CycleDiff manipulate facial image according to a given attribute label without
 mask (explicitly or implicitly). Experiments on CelebA-HQ dataset achieve convincing results that shows CycleDiff can be made highly effective.
