@@ -83,7 +83,7 @@ def distributed_default():
 def create_argparser():
     defaults = dict(
         data_dir="/training_data/CelebA/celeba-hq-30000/celeba-256-tmp",
-        exp_dir="/home/gongshuai/con-diffusion/20221108-attribute20-resnet18/",
+        exp_dir="/home/gongshuai/con-diffusion/20230528-attribute20/attribute-classifier/",
         learning_rate=1e-5,
         batch_size=64,
         max_steps=300,

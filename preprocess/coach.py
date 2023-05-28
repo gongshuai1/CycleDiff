@@ -30,17 +30,17 @@ class Coach:
 
         # Dataset
         self.data_loader = self.configure_dataset()
-        self.test_loader = self.configure_test_dataset()
+        # self.test_loader = self.configure_test_dataset()
 
         # Loss
         self.loss = AttributeLoss(self.args.attribute_count).cuda(self.args.gpu).eval()
         self.loss_dict = []
-        self.accuracy = []
+        # self.accuracy = []
 
         # Optimizer - 3000 for test
         self.optimizer = self.configure_optimizer()
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer=self.optimizer, T_max=self.args.max_steps * ((30000 - 3000) // (self.args.batch_size * 2)))
+            optimizer=self.optimizer, T_max=self.args.max_steps * (30000// (self.args.batch_size * 2)))
 
         # Checkpoint
         self.checkpoint_dir = os.path.join(self.args.exp_dir, "checkpoint")
@@ -120,7 +120,7 @@ class Coach:
             self.save_loss(self.global_step, epoch_loss)
 
             # Validate testset
-            self.accuracy.append(self.validate_testset())
+            # self.accuracy.append(self.validate_testset())
 
             # checkpoint and log
             if self.global_step % self.args.save_interval == 0 or self.global_step == self.args.max_steps:
@@ -163,13 +163,13 @@ class Coach:
         plt.tick_params(axis='both', labelsize=14)
         plt.savefig(os.path.join(self.log_dir, f'{self.global_step}-loss.png'))
 
-        accuracy = [item.detach().cpu() for item in self.accuracy]
-        plt.plot(steps, accuracy)
-        plt.title('Accuracy-steps', fontsize=24)
-        plt.xlabel('steps', fontsize=14)
-        plt.ylabel('accuracy', fontsize=14)
-        plt.tick_params(axis='both', labelsize=14)
-        plt.savefig(os.path.join(self.log_dir, f'{self.global_step}-accuracy.png'))
+        # accuracy = [item.detach().cpu() for item in self.accuracy]
+        # plt.plot(steps, accuracy)
+        # plt.title('Accuracy-steps', fontsize=24)
+        # plt.xlabel('steps', fontsize=14)
+        # plt.ylabel('accuracy', fontsize=14)
+        # plt.tick_params(axis='both', labelsize=14)
+        # plt.savefig(os.path.join(self.log_dir, f'{self.global_step}-accuracy.png'))
 
     def __get_save_dict(self):
         save_dict = {
