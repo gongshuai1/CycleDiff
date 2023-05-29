@@ -69,8 +69,8 @@ def create_argparser():
         log_interval=100,
         save_interval=10000,
         # save_interval=100,
-        resume_checkpoint="/home/gongshuai/con-diffusion/20221012-baseline-1/model400000.pt",
-        # resume_checkpoint=None,
+        # resume_checkpoint="/home/gongshuai/con-diffusion/20221012-baseline-1/model400000.pt",
+        resume_checkpoint=None,
         use_fp16=False,
         fp16_scale_growth=1e-3,
     )
@@ -99,6 +99,6 @@ def create_argparser():
 
 
 if __name__ == "__main__":
-    os.environ['OPENAI_LOGDIR'] = '/home/gongshuai/con-diffusion/20221012-baseline-1'
+    os.environ['OPENAI_LOGDIR'] = '/home/gongshuai/con-diffusion/20230528-attribute20/diffusion/'
 
     main()

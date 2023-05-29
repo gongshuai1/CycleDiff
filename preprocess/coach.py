@@ -20,7 +20,7 @@ class Coach:
 
         # Load model
         self.task_num = self.args.attribute_count
-        self.attribute_classifier = AttributeClassifier(self.args.attribute_count)
+        self.attribute_classifier = AttributeClassifier(feature_dim=256, att_num=self.args.attribute_count)
         self.attribute_classifier.cuda(self.args.gpu)
         self.attribute_classifier = torch.nn.parallel.DistributedDataParallel(
             self.attribute_classifier, device_ids=[self.args.gpu], broadcast_buffers=False, find_unused_parameters=True
@@ -40,7 +40,7 @@ class Coach:
         # Optimizer - 3000 for test
         self.optimizer = self.configure_optimizer()
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer=self.optimizer, T_max=self.args.max_steps * (30000// (self.args.batch_size * 2)))
+            optimizer=self.optimizer, T_max=self.args.max_steps * (30000 // (self.args.batch_size * 2)))
 
         # Checkpoint
         self.checkpoint_dir = os.path.join(self.args.exp_dir, "checkpoint")
@@ -187,13 +187,13 @@ def normalize(inputs):
 
 
 class FeedForward(nn.Module):
-    def __init__(self, dim, hidden_dim, dropout=0.):
+    def __init__(self, dim, dropout=0.):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(dim, hidden_dim),
+            nn.Linear(dim, dim // 2),
             nn.GELU(),
             nn.Dropout(dropout),
-            nn.Linear(hidden_dim, 1),
+            nn.Linear(dim // 2, 1),
             nn.Sigmoid(),
         )
 
@@ -201,16 +201,66 @@ class FeedForward(nn.Module):
         return self.net(x)
 
 
-class AttributeClassifier(nn.Module):
-    def __init__(self, att_num, cpk_path=None):
-        super(AttributeClassifier, self).__init__()
-        self.att_num = att_num
+class ImageEncoder(nn.Module):
+    def __init__(self, dim, cpk_path=None):
+        super().__init__()
+        self.dim = dim
+        self.model = nn.ModuleList([
+            Resize(224),
+            models.resnet18(pretrained=True),
+            nn.GELU(),
+            nn.Linear(1000, self.dim),
+            nn.GELU(),
+            # nn.Linear(256, self.dim),
+            # nn.GELU(),
+        ])
 
-        self.resize = Resize(224)
-        self.base_model = models.resnet18(pretrained=True)
+        if cpk_path is not None and os.path.exists(cpk_path):
+            checkpoint = torch.load(cpk_path, map_location='cpu')
+            cpk_base_model = OrderedDict()
+            for k, v in checkpoint['state_dict'].items():
+                if k.startswith('module.base_model.model.'):
+                    cpk_base_model[k.replace('module.base_model.model.', '')] = v
+            self.model.load_state_dict(cpk_base_model)
+
+    def forward(self, x):
+        for layer in self.model:
+            x = layer(x)
+        return x
+
+
+class AttributeClassifierHeaders(nn.Module):
+    def __init__(self, in_dim, att_num, cpk_path=None):
+        super(AttributeClassifierHeaders, self).__init__()
+        self.att_num = att_num
+        self.in_dim = in_dim
+
         self.classify_headers = nn.ModuleList([])
         for _ in range(self.att_num):
-            self.classify_headers.append(FeedForward(1000, 768))
+            self.classify_headers.append(FeedForward(self.in_dim))
+
+        if cpk_path is not None and os.path.exists(cpk_path):
+            checkpoint = torch.load(cpk_path, map_location='cpu')
+            cpk_classify_headers = OrderedDict()
+            for k, v in checkpoint['state_dict'].items():
+                if k.startswith('module.classify_headers.classify_headers.'):
+                    cpk_classify_headers[k.replace('module.classify_headers.classify_headers.', '')] = v
+            self.classify_headers.load_state_dict(cpk_classify_headers)
+
+    def forward(self, x):
+        y = [header(x) for header in self.classify_headers]
+        y = torch.squeeze(torch.stack(y, dim=0), dim=2).permute(1, 0)
+        return y
+
+
+class AttributeClassifier(nn.Module):
+    def __init__(self, feature_dim, att_num, cpk_path=None):
+        super(AttributeClassifier, self).__init__()
+        self.feature_dim = feature_dim
+        self.att_num = att_num
+
+        self.base_model = ImageEncoder(dim=self.feature_dim)
+        self.classify_headers = AttributeClassifierHeaders(in_dim=self.feature_dim, att_num=self.att_num)
 
         if cpk_path is not None and os.path.exists(cpk_path):
             checkpoint = torch.load(cpk_path, map_location='cpu')
@@ -226,10 +276,8 @@ class AttributeClassifier(nn.Module):
             self.classify_headers.load_state_dict(cpk_classify_headers)
 
     def forward(self, x):
-        x = self.resize(x)
         feature = self.base_model(x)
-        y = [header(feature) for header in self.classify_headers]
-        y = torch.squeeze(torch.stack(y, dim=0), dim=2).permute(1, 0)
+        y = self.classify_headers(feature)
         return y
 
 
@@ -241,4 +289,5 @@ class AttributeLoss(nn.Module):
 
     def forward(self, y, y_hat):
         loss = self.loss_fn(y_hat, y) * self.att_num
+        # loss = self.loss_fn(y_hat, y)
         return loss

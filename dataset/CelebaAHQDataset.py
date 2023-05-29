@@ -25,10 +25,7 @@ class CelebAHQDataset(torch.utils.data.Dataset):
             self.length = 0
         else:
             # Length for diffusion
-            # self.length = len(os.listdir(self.data_dir_path)) - 4  # 4 for attribute.pt, attribute_8_30000.pt, attribute_20_30000.pt and index_mapping.txt
-            # Length for classifier
-            # self.length = len(os.listdir(self.data_dir_path)) - 4
-            self.length = len(os.listdir(self.data_dir_path)) - 4 - 3000  # 3000 for test
+            self.length = len(os.listdir(self.data_dir_path)) - 5  # 4 for attribute.pt, attribute_8_30000.pt, attribute_20_30000.pt and index_mapping.txt
 
         assert len(self.attribute) >= self.length
 
@@ -37,8 +34,6 @@ class CelebAHQDataset(torch.utils.data.Dataset):
             return None
         # For diffusion - 30000
         file_path = os.path.join(self.data_dir_path, f'%05d.jpg' % index)
-        # For attribute classifier - 200000
-        # file_path = os.path.join(self.data_dir_path, f'%06d.jpg' % (index + 1))
 
         # Load images
         with bf.BlobFile(file_path, "rb") as f:
@@ -52,7 +47,6 @@ class CelebAHQDataset(torch.utils.data.Dataset):
 
         # Load attributes
         y = self.attribute[index]
-        # y = (y + 1) // 2  # convert [-1, 1] to [0, 1]
 
         return x, y
 
