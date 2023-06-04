@@ -23,7 +23,7 @@ def get_arguments() -> argparse.Namespace:
     )
     parser.add_argument(
         "--paper_sample_output_path", type=str, help="The path to the output",
-        default="/home/gongshuai/con-diffusion/20221012-baseline-1/sample/attribute_classifier/all_sample/paper_samples/sample1"
+        default="/home/gongshuai/con-diffusion/20230528-attribute20/celeba/"
     )
 
     # Diffusion
@@ -66,7 +66,7 @@ def get_arguments() -> argparse.Namespace:
     parser.add_argument("--att_num", type=int, help="The number of augmentation", default=20)
     parser.add_argument("--attribute_cpk_path", type=str,
                         help="The checkpoint path of attribute classifier model",
-                        default="/home/gongshuai/con-diffusion/20221108-attribute20-resnet18/checkpoint/iteration_250.pt")
+                        default="/home/gongshuai/con-diffusion/20230528-attribute20/celeba/checkpoint/iteration_250.pt")
 
     # Loss
     parser.add_argument(
@@ -116,8 +116,8 @@ def get_arguments() -> argparse.Namespace:
 
     # Misc
     parser.add_argument("--seed", type=int, help="The random seed", default=None)
-    parser.add_argument("--gpu_id", type=int, help="The GPU ID", default=1)
-    parser.add_argument("--output_path", type=str, default="/home/gongshuai/con-diffusion/20221012-baseline-1/sample/attribute_classifier/")
+    parser.add_argument("--gpu_id", type=int, help="The GPU ID", default=4)
+    parser.add_argument("--output_path", type=str, default="/home/gongshuai/con-diffusion/20230528-attribute20/celeba/")
     parser.add_argument("-o", "--output_file", type=str, help="The filename to save, must be png", default="1.png")
     parser.add_argument("--iterations_num", type=int, help="The number of iterations", default=1)
     parser.add_argument("--batch_size", type=int,

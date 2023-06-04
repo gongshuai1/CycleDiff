@@ -63,9 +63,9 @@ class AttributeEditor:
         self.model, self.diffusion = create_model_and_diffusion(**self.model_config)
         self.model.load_state_dict(
             torch.load(
-                "/home/gongshuai/con-diffusion/20221012-baseline-1/model400000.pt"
+                "/home/gongshuai/con-diffusion/20230528-attribute20/celeba/checkpoint/model450000.pt"
                 if self.args.model_output_size == 256
-                else "/home/gongshuai/con-diffusion/20221012-baseline-1/model400000.pt",
+                else "/home/gongshuai/con-diffusion/20230528-attribute20/celeba/checkpoint/model450000.pt",
                 map_location="cpu",
             )
         )
@@ -79,7 +79,7 @@ class AttributeEditor:
 
         # Attribute classifier
         self.attribute_model = AttributeClassifier(
-            att_num=self.args.att_num, cpk_path=self.args.attribute_cpk_path).requires_grad_(False).eval().to(
+            feature_dim=256, att_num=self.args.att_num, cpk_path=self.args.attribute_cpk_path).requires_grad_(False).eval().to(
             self.device)
         self.attribute_loss = AttributeLoss(
             attribute_classifier=self.attribute_model, loss_fn=AttLoss(att_num=self.args.att_num)).eval().to(
@@ -94,8 +94,8 @@ class AttributeEditor:
         self.metrics_accumulator = MetricsAccumulator()
 
         # init
-        self.index = 9659
-        self.attribute_index = 9
+        self.index = 9881
+        self.attribute_index = 12
         self.init_image, self.attribute = self.load_image(self.args.dataset_dir, self.index)
         self.query_attribute = self.attribute.clone().detach()
         if self.attribute_index < 20:
@@ -230,4 +230,5 @@ class AttributeEditor:
                 if j == total_steps:
                     # return sample['pred_xstart']
                     result = sample['pred_xstart']
-                    self.save_sample(result, self.args.paper_sample_output_path, self.index, self.attribute_index)
+                    # self.save_sample(result, self.args.paper_sample_output_path, self.index, self.attribute_index)
+                    self.save_sample(result, self.args.output_path, self.index, self.attribute_index)
