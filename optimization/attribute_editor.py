@@ -230,5 +230,39 @@ class AttributeEditor:
                 if j == total_steps:
                     # return sample['pred_xstart']
                     result = sample['pred_xstart']
-                    # self.save_sample(result, self.args.paper_sample_output_path, self.index, self.attribute_index)
-                    self.save_sample(result, self.args.output_path, self.index, self.attribute_index)
+                    self.save_sample(result, self.args.paper_sample_output_path, self.index, self.attribute_index)
+                    # self.save_sample(result, self.args.output_path, self.index, self.attribute_index)
+
+    def sample_batch(self):
+        total = 1000
+        def random_index(count):
+            indexes = []
+            counter = 0
+            while counter < count:
+                index = random.randint(0, 30000 - 1)  # [a, b]
+                if index not in indexes:
+                    indexes.append(index)
+                    counter += 1
+            return indexes
+
+        attribute_indexes = [40]  # gpu 0
+        # attribute_indexes = [15]  # gpu 1
+        # attribute_indexes = [40]  # gpu 2
+        # attribute_indexes = [21]  # gpu 3
+        # attribute_indexes = [31, 36]  # gpu 4
+        # attribute_indexes = [39, 40]  # gpu 5
+        for attr_index in attribute_indexes:
+            ins = random_index(total)
+            self.attribute_index = attr_index
+            for i in ins:
+                self.index = i
+                self.init_image, self.attribute = self.load_image(self.args.dataset_dir, self.index)
+                self.query_attribute = self.attribute.clone().detach()
+                if self.attribute_index < 40:
+                    self.query_attribute[self.attribute_index] = 1 - self.query_attribute[self.attribute_index]
+                self.init_image = torch.unsqueeze(self.init_image, dim=0).to(self.device)
+                self.attribute = torch.unsqueeze(self.attribute, dim=0).to(self.device)
+                self.query_attribute = torch.unsqueeze(self.query_attribute, dim=0).to(self.device)
+                self.attribute_mask = torch.abs(self.query_attribute - self.attribute)
+
+                self.edit_image_by_attribute()
