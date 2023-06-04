@@ -63,9 +63,9 @@ class AttributeEditor:
         self.model, self.diffusion = create_model_and_diffusion(**self.model_config)
         self.model.load_state_dict(
             torch.load(
-                "/home/gongshuai/con-diffusion/20230528-attribute20/celeba/checkpoint/model450000.pt"
+                "/home/gongshuai/con-diffusion/20230528-attribute20/celeba/checkpoint/model470000.pt"
                 if self.args.model_output_size == 256
-                else "/home/gongshuai/con-diffusion/20230528-attribute20/celeba/checkpoint/model450000.pt",
+                else "/home/gongshuai/con-diffusion/20230528-attribute20/celeba/checkpoint/model470000.pt",
                 map_location="cpu",
             )
         )
@@ -125,7 +125,7 @@ class AttributeEditor:
         return x, y
 
     def save_sample(self, img, output_dir, index, attribute_index):
-        file_path = os.path.join(output_dir, f'%05d_{attribute_index}.jpg' % index)
+        file_path = os.path.join(output_dir, str(attribute_index), f'%05d_{attribute_index}.jpg' % index)
         torchvision.utils.save_image(img, file_path, normalize=True, scale_each=True, range=(-1, 1))
 
     def unscale_timestep(self, t):
@@ -245,12 +245,12 @@ class AttributeEditor:
                     counter += 1
             return indexes
 
-        attribute_indexes = [40]  # gpu 0
-        # attribute_indexes = [15]  # gpu 1
-        # attribute_indexes = [40]  # gpu 2
-        # attribute_indexes = [21]  # gpu 3
-        # attribute_indexes = [31, 36]  # gpu 4
-        # attribute_indexes = [39, 40]  # gpu 5
+        # attribute_indexes = [2]  # gpu 0
+        # attribute_indexes = [9]  # gpu 1
+        # attribute_indexes = [11]  # gpu 2
+        # attribute_indexes = [12]  # gpu 3
+        # attribute_indexes = [15]  # gpu 4
+        attribute_indexes = [18]  # gpu 5
         for attr_index in attribute_indexes:
             ins = random_index(total)
             self.attribute_index = attr_index
@@ -258,7 +258,7 @@ class AttributeEditor:
                 self.index = i
                 self.init_image, self.attribute = self.load_image(self.args.dataset_dir, self.index)
                 self.query_attribute = self.attribute.clone().detach()
-                if self.attribute_index < 40:
+                if self.attribute_index < 20:
                     self.query_attribute[self.attribute_index] = 1 - self.query_attribute[self.attribute_index]
                 self.init_image = torch.unsqueeze(self.init_image, dim=0).to(self.device)
                 self.attribute = torch.unsqueeze(self.attribute, dim=0).to(self.device)
