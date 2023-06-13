@@ -44,8 +44,8 @@ def attribute_accuracy():
     Metric for each attribute accuracy
     :return:
     """
-    data_dir = '/home/gongshuai/con-diffusion/20221012-baseline-1/sample/attribute_classifier/all_sample/'
-    cpk_path = '/home/gongshuai/con-diffusion/20221108-attribute20-resnet18/checkpoint/iteration_250.pt'
+    data_dir = '/home/gongshuai/con-diffusion/20230528-attribute20/celeba/all_samples/all/'
+    cpk_path = '/home/gongshuai/con-diffusion/20230528-attribute20/celeba/checkpoint/iteration_250.pt'
     attribute_path = '/training_data/CelebA/celeba-hq-30000/celeba-256-tmp/attribute_20_30000.pt'
     attribute_index = 2
     threshold = 0.5

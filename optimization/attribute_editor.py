@@ -250,7 +250,9 @@ class AttributeEditor:
         # attribute_indexes = [11]  # gpu 2
         # attribute_indexes = [12]  # gpu 3
         # attribute_indexes = [15]  # gpu 4
-        attribute_indexes = [18]  # gpu 5
+        # attribute_indexes = [18]  # gpu 5
+        # attribute_indexes = [19]  # gpu 4
+        attribute_indexes = [20]  # gpu 5
         for attr_index in attribute_indexes:
             ins = random_index(total)
             self.attribute_index = attr_index
