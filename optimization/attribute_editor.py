@@ -94,8 +94,8 @@ class AttributeEditor:
         self.metrics_accumulator = MetricsAccumulator()
 
         # init
-        self.index = 9881
-        self.attribute_index = 12
+        self.index = 22970
+        self.attribute_index = 19
         self.init_image, self.attribute = self.load_image(self.args.dataset_dir, self.index)
         self.query_attribute = self.attribute.clone().detach()
         if self.attribute_index < 20:
@@ -144,18 +144,27 @@ class AttributeEditor:
         return out["pred_xstart"]
         # return result
 
-    def cycle_reconstrct_each_step(self, x_start, t):
+    def cycle_reconstrct_each_step(self, x_t_pre, t_pre):
         # Diffusion
-        x_t_hat = self.diffusion.q_sample(x_start, t)
+        x_t_hat = self.diffusion.q_sample(x_t_pre, t_pre)
         # Denoising diffusion for one step
         out = self.diffusion.p_sample(
-            self.model, x_t_hat, t, clip_denoised=False, model_kwargs={"y": self.attribute}
+            self.model, x_t_hat, t_pre + 1, clip_denoised=False, model_kwargs={"y": self.attribute}
         )
         x_t_prev_hat = out["sample"]
         return x_t_prev_hat
 
-    def edit_image_by_attribute(self):
+    def edit_image_for_person(self):
+        attribute_index = [2, 9, 11, 12, 15, 18, 19]
+        for index in attribute_index:
+            self.attribute_index = index
+            self.query_attribute = self.attribute.clone().detach()
+            if self.attribute_index < 20:
+                self.query_attribute[0][self.attribute_index] = 1 - self.query_attribute[0][self.attribute_index]
+            self.attribute_mask = torch.abs(self.query_attribute - self.attribute)
+            self.edit_image_by_attribute()
 
+    def edit_image_by_attribute(self):
         def cond_fn(x, t, y=None):
             with torch.enable_grad():
                 x = x.detach().requires_grad_()
@@ -199,6 +208,55 @@ class AttributeEditor:
 
                 return -torch.autograd.grad(loss, x)[0]
 
+        def cond_fn_step(x, t, y=None):
+            with torch.enable_grad():
+                x = x.detach().requires_grad_()
+                t = self.unscale_timestep(t)
+
+                out_0 = self.diffusion.p_mean_variance(
+                    self.model, x, t, clip_denoised=False, model_kwargs={"y": y}
+                )
+
+                out_pre = self.diffusion.p_sample(
+                    self.model, x, t, clip_denoised=False, model_kwargs={"y": y}
+                )
+
+                fac = self.diffusion.sqrt_one_minus_alphas_cumprod[t[0].item()]
+                x_in = out_0["pred_xstart"] * fac + x * (1 - fac)
+                x_t_1 = out_pre["sample"]
+                # x_in = out["pred_xstart"]
+
+                loss = torch.zeros((x.shape[0]), device=self.device)
+                if self.args.cycle_reconstruct_lambda != 0:
+                    x_t_1_hat = self.cycle_reconstrct_each_step(x_t_1, t-1)
+                    x_t_1_origin = self.diffusion.q_sample(self.init_image, t-1)
+                    cycle_consistency_loss = self.cycle_reconstruct_loss(x_t_1_hat,
+                                                                         x_t_1_origin) * self.args.cycle_reconstruct_lambda
+                    loss = loss + cycle_consistency_loss
+                    self.metrics_accumulator.update_metric("cycle_consistency_loss", cycle_consistency_loss.item())
+                if self.args.attribute_guidance_lambda != 0:
+                    attribute_loss = self.attribute_loss(x_in, y,
+                                                         self.attribute_mask) * self.args.attribute_guidance_lambda
+                    loss = loss + attribute_loss
+                    self.metrics_accumulator.update_metric("attribute_loss", attribute_loss.item())
+
+                if self.args.range_lambda != 0:
+                    r_loss = range_loss(out_0["pred_xstart"]).sum() * self.args.range_lambda
+                    loss = loss + r_loss
+                    self.metrics_accumulator.update_metric("range_loss", r_loss.item())
+
+                if self.args.lpips_sim_lambda:
+                    lpips_loss = self.lpips_model(x_in, self.init_image).sum() * self.args.lpips_sim_lambda
+                    loss = loss + lpips_loss
+                    self.metrics_accumulator.update_metric("lpips_loss", lpips_loss.item())
+
+                if self.args.id_lambda:
+                    id_loss = self.id_model(x_in, self.init_image).sum() * self.args.id_lambda
+                    loss = loss + id_loss
+                    self.metrics_accumulator.update_metric("id_loss", id_loss.item())
+
+                return -torch.autograd.grad(loss, x)[0]
+
         for iteration_number in range(self.args.iterations_num):
             print(f"Start iterations {iteration_number}")
 
@@ -218,6 +276,7 @@ class AttributeEditor:
                 clip_denoised=False,
                 model_kwargs={"y": self.query_attribute},
                 cond_fn=cond_fn,
+                # cond_fn=cond_fn_step,
                 progress=True,
                 skip_timesteps=self.args.skip_timesteps,
                 init_image=self.init_image,
@@ -230,8 +289,10 @@ class AttributeEditor:
                 if j == total_steps:
                     # return sample['pred_xstart']
                     result = sample['pred_xstart']
-                    self.save_sample(result, self.args.paper_sample_output_path, self.index, self.attribute_index)
+                    # self.save_sample(result, self.args.paper_sample_output_path, self.index, self.attribute_index)
                     # self.save_sample(result, self.args.output_path, self.index, self.attribute_index)
+                    file_path = os.path.join(self.args.output_path, f'%05d_{self.attribute_index}.jpg' % self.index)
+                    torchvision.utils.save_image(result, file_path, normalize=True, scale_each=True, range=(-1, 1))
 
     def sample_batch(self):
         total = 1000

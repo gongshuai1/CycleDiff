@@ -13,7 +13,6 @@ from diffusion.script_util import (
 )
 from collections import OrderedDict
 from torchvision.transforms import Resize
-from dataset.CelebaAHQDataset import CelebAHQDataset
 from einops import rearrange
 from sklearn.decomposition import PCA
 from mpl_toolkits.mplot3d import Axes3D
@@ -26,10 +25,10 @@ class FeedForward(nn.Module):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(dim, dim // 2),
-            nn.GELU(),
-            nn.Dropout(dropout),
-            nn.Linear(dim // 2, 1),
-            nn.Sigmoid(),
+            # nn.GELU(),
+            # nn.Dropout(dropout),
+            # nn.Linear(dim // 2, 1),
+            # nn.Sigmoid(),
         )
 
     def forward(self, x):
@@ -84,7 +83,9 @@ class AttributeClassifierHeaders(nn.Module):
 
     def forward(self, x):
         y = [header(x) for header in self.classify_headers]
-        y = torch.squeeze(torch.stack(y, dim=0), dim=2).permute(1, 0)
+        y = [y[2], y[9], y[11], y[12], y[15], y[18]]
+        y = torch.squeeze(torch.stack(y, dim=0), dim=2)
+        y = y.permute(1, 0, 2)
         return y
 
 
@@ -108,12 +109,50 @@ class AttributeClassifier(nn.Module):
                     cpk_classify_headers[k.replace('module.classify_headers.', '')] = v
             # print('state_dict = ', checkpoint['state_dict'])
             self.base_model.load_state_dict(cpk_base_model)
-            self.classify_headers.load_state_dict(cpk_classify_headers)
+            self.classify_headers.load_state_dict(cpk_classify_headers, strict=False)
 
     def forward(self, x):
         feature = self.base_model(x)
         y = self.classify_headers(feature)
         return y
+
+
+class CelebAHQDataset(torch.utils.data.Dataset):
+    """
+    CelebA dataset for facial generation and manipulate
+    """
+    def __init__(self, data_dir_path):
+        super(CelebAHQDataset, self).__init__()
+        self.data_dir_path = data_dir_path
+
+        # Count of images
+        if not os.path.exists(self.data_dir_path):
+            self.length = 0
+        else:
+            # Length for diffusion
+            self.length = len(os.listdir(self.data_dir_path))
+
+    def __getitem__(self, index):
+        if self.length == 0:
+            return None
+        # For diffusion - 30000
+        file_path = os.path.join(self.data_dir_path, f'%05d.jpg' % index)
+
+        # Load images
+        with bf.BlobFile(file_path, "rb") as f:
+            pil_image = Image.open(f)
+            pil_image.load()
+
+        x = np.array(pil_image.convert("RGB"))
+        x = x.astype(np.float32) / 127.5 - 1
+        x = torch.from_numpy(x)
+        x = x.permute(2, 0, 1)  # (C, H, W)
+
+        return x
+
+    def __len__(self):
+        return self.length
+
 
 def load_image(file_path):
     # Load images
@@ -129,9 +168,9 @@ def load_image(file_path):
 
 
 def generate_samples_uncondition():
-    attribute_path = '/training_data/CelebA/celeba-hq-30000/celeba-256-tmp/attribute_40.pt'
-    save_path = '/home/gongshuai/con-diffusion/20230414-attribute40/sample/analyze/'
-    attributes = torch.load(attribute_path)[400:1000]
+    attribute_path = '/training_data/CelebA/celeba-hq-30000/celeba-256-tmp/attribute_20_30000.pt'
+    save_path = '/home/gongshuai/con-diffusion/20230528-attribute20/celeba/data_distribution/'
+    attributes = torch.load(attribute_path)[0:1000]
     print(f'attributes.shape = {attributes.shape}')
 
     model_config = model_and_diffusion_defaults()
@@ -157,13 +196,13 @@ def generate_samples_uncondition():
     image_size = (model_config["image_size"], model_config["image_size"])
 
     # Load models
-    device = "cuda:5"
+    device = "cuda:3"
     print("Using device:", device)
 
     model, diffusion = create_model_and_diffusion(**model_config)
     model.load_state_dict(
         torch.load(
-            "/home/gongshuai/con-diffusion/20230414-attribute40/model430000.pt",
+            "/home/gongshuai/con-diffusion/20230528-attribute20/celeba/checkpoint/model470000.pt",
             map_location="cpu",
         )
     )
@@ -196,28 +235,28 @@ def generate_samples_uncondition():
         total_steps = 1000 - 1
         for j, sample in enumerate(samples):
             result = sample['pred_xstart']
-            if j == 0:
-                file_path = os.path.join(save_path, "999", f'%05d.jpg' % index)
+            if j == 99:
+                file_path = os.path.join(save_path, "900", f'%05d.jpg' % index)
                 torchvision.utils.save_image(result, file_path, normalize=True, scale_each=True, range=(-1, 1))
-            if j == 199:
-                file_path = os.path.join(save_path, "800", f'%05d.jpg' % index)
+            if j == 399:
+                file_path = os.path.join(save_path, "600", f'%05d.jpg' % index)
                 torchvision.utils.save_image(result, file_path, normalize=True, scale_each=True, range=(-1, 1))
             if j == total_steps:
                 file_path = os.path.join(save_path, "0", f'%05d.jpg' % index)
                 torchvision.utils.save_image(result, file_path, normalize=True, scale_each=True, range=(-1, 1))
 
-    for i in range(len(attributes)):
-        generate_by_attributes(i+200, attributes[i:i+1])
+    for i in range(121, len(attributes)):
+        generate_by_attributes(i, attributes[i:i+1])
 
 
 def visualize():
-    data_dir_path = '/home/gongshuai/con-diffusion/20230414-attribute40/sample/analyze/origin/'
-    cpk_path = '/home/gongshuai/con-diffusion/20230414-attribute40/classifier-01/checkpoint/iteration_250.pt'
+    data_dir_path = '/home/gongshuai/con-diffusion/20230528-attribute20/celeba/data_distribution/origin/'
+    cpk_path = '/home/gongshuai/con-diffusion/20230528-attribute20/celeba/checkpoint/iteration_250.pt'
     save_path = '/home/gongshuai/con-diffusion/20230414-attribute40/sample/analyze/sample_999_free.png'
     batch_size = 16
 
     # Model
-    model = AttributeClassifier(256, 40, cpk_path=cpk_path)
+    model = AttributeClassifier(feature_dim=256, att_num=20, cpk_path=cpk_path)
 
     # Extract feature
     dataset = CelebAHQDataset(data_dir_path)
@@ -227,6 +266,7 @@ def visualize():
         feature = model(batch)
         features.append(feature)
     features = torch.stack(features, dim=0)
+    print(f'features.shape = {features.shape}')
     features = rearrange(features, 'n b a c -> (n b) a c')  # (n, 6, c)
 
     # PCA
@@ -239,7 +279,27 @@ def visualize():
     print(f'pca1_x.shape = {x.shape}')
     x = pca2.fit_transform(x)
     print(f'pca12_x.shape = {x.shape}')
+
+    def normalize(x):
+        mean = [0., 0., 0.]
+        std = [0., 0., 0.]
+
+        mean += x.mean(1).sum(0)
+        std += x.std(1).sum(0)
+
+        mean = mean / len(x)
+        std = std / len(x)
+
+        print(f'mean = {mean}, std = {std}')
+
+        for i in range(3):
+            x[:, i] = (x[:, i] - mean[i]) / std[i]
+        return x
+
+    x = normalize(x)
+
     x = rearrange(x, '(n a) c -> n a c', a=6)
+
     print(f'x.shape = {x.shape}')
 
     # Plot
@@ -307,8 +367,8 @@ def attribute_accuracy():
 
 if __name__ == '__main__':
     # generate_samples_uncondition()
-    # visualize()
-    attribute_accuracy()
+    visualize()
+    # attribute_accuracy()
     # file_name = "12453_12.jpg"
     # name = file_name.split(".")[0]
     # index, attribute_index = name.split("_")[0], name.split("_")[1]
