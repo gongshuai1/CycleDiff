@@ -94,12 +94,15 @@ class AttributeEditor:
         self.metrics_accumulator = MetricsAccumulator()
 
         # init
-        self.index = 22970
-        self.attribute_index = 19
+        self.index = 17955
+        self.attribute_index = [9, 12]
         self.init_image, self.attribute = self.load_image(self.args.dataset_dir, self.index)
         self.query_attribute = self.attribute.clone().detach()
-        if self.attribute_index < 20:
-            self.query_attribute[self.attribute_index] = 1 - self.query_attribute[self.attribute_index]
+        for index in self.attribute_index:
+            if index < 20:
+                self.query_attribute[index] = 1 - self.query_attribute[index]
+        # if self.attribute_index < 20:
+        #     self.query_attribute[self.attribute_index] = 1 - self.query_attribute[self.attribute_index]
         self.init_image = torch.unsqueeze(self.init_image, dim=0).to(self.device)
         self.attribute = torch.unsqueeze(self.attribute, dim=0).to(self.device)
         self.query_attribute = torch.unsqueeze(self.query_attribute, dim=0).to(self.device)
