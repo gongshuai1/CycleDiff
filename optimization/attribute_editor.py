@@ -94,9 +94,9 @@ class AttributeEditor:
         self.metrics_accumulator = MetricsAccumulator()
 
         # init
-        self.index = 11249
+        self.index = 2017
         # self.attribute_index = [20]
-        self.attribute_index = 11
+        self.attribute_index = 15
         self.init_image, self.attribute = self.load_image(self.args.dataset_dir, self.index)
         self.query_attribute = self.attribute.clone().detach()
         # for index in self.attribute_index:
