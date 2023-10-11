@@ -79,7 +79,8 @@ class AttributeEditor:
 
         # Attribute classifier
         self.attribute_model = AttributeClassifier(
-            feature_dim=256, att_num=self.args.att_num, cpk_path=self.args.attribute_cpk_path).requires_grad_(False).eval().to(
+            feature_dim=256, att_num=self.args.att_num, cpk_path=self.args.attribute_cpk_path).requires_grad_(
+            False).eval().to(
             self.device)
         self.attribute_loss = AttributeLoss(
             attribute_classifier=self.attribute_model, loss_fn=AttLoss(att_num=self.args.att_num)).eval().to(
@@ -94,16 +95,24 @@ class AttributeEditor:
         self.metrics_accumulator = MetricsAccumulator()
 
         # init
-        self.index = 2017
-        # self.attribute_index = [20]
-        self.attribute_index = 15
+        self.index = 11249
+
+        # self.attribute_index = [12, 18]
+
+        self.attribute_index = 18
+
         self.init_image, self.attribute = self.load_image(self.args.dataset_dir, self.index)
         self.query_attribute = self.attribute.clone().detach()
+
+        # 多属性（2个）的循环
         # for index in self.attribute_index:
-        #     if index < 20:
-        #         self.query_attribute[index] = 1 - self.query_attribute[index]
         if self.attribute_index < 20:
             self.query_attribute[self.attribute_index] = 1 - self.query_attribute[self.attribute_index]
+
+        # 一个属性循环
+        # if self.attribute_index < 20:
+        #     self.query_attribute[self.attribute_index] = 1 - self.query_attribute[self.attribute_index]
+
         self.init_image = torch.unsqueeze(self.init_image, dim=0).to(self.device)
         self.attribute = torch.unsqueeze(self.attribute, dim=0).to(self.device)
         self.query_attribute = torch.unsqueeze(self.query_attribute, dim=0).to(self.device)
@@ -114,7 +123,7 @@ class AttributeEditor:
         attributes = torch.load(attribute_path)
         file_name = os.path.join(data_dir, f'%05d.jpg' % index)
 
-        # Load images
+        # Load images1
         with bf.BlobFile(file_name, "rb") as f:
             pil_image = Image.open(f)
             pil_image.load()
@@ -232,8 +241,8 @@ class AttributeEditor:
 
                 loss = torch.zeros((x.shape[0]), device=self.device)
                 if self.args.cycle_reconstruct_lambda != 0:
-                    x_t_1_hat = self.cycle_reconstrct_each_step(x_t_1, t-1)
-                    x_t_1_origin = self.diffusion.q_sample(self.init_image, t-1)
+                    x_t_1_hat = self.cycle_reconstrct_each_step(x_t_1, t - 1)
+                    x_t_1_origin = self.diffusion.q_sample(self.init_image, t - 1)
                     cycle_consistency_loss = self.cycle_reconstruct_loss(x_t_1_hat,
                                                                          x_t_1_origin) * self.args.cycle_reconstruct_lambda
                     loss = loss + cycle_consistency_loss
@@ -300,6 +309,7 @@ class AttributeEditor:
 
     def sample_batch(self):
         total = 1000
+
         def random_index(count):
             indexes = []
             counter = 0
@@ -310,12 +320,12 @@ class AttributeEditor:
                     counter += 1
             return indexes
 
-        # attribute_indexes = [2]  # gpu 0
-        # attribute_indexes = [9]  # gpu 1
-        # attribute_indexes = [11]  # gpu 2
-        # attribute_indexes = [12]  # gpu 3
-        # attribute_indexes = [15]  # gpu 4
-        # attribute_indexes = [18]  # gpu 5
+        # attribute_indexes = [2]  # gpu 1
+        # attribute_indexes = [9]  # gpu 4
+        # attribute_indexes = [11]  # gpu 5
+        # attribute_indexes = [12]  # gpu 0
+        # attribute_indexes = [15]  # gpu 2
+        # attribute_indexes = [18]  # gpu 3
         # attribute_indexes = [19]  # gpu 4
         attribute_indexes = [20]  # gpu 5
         for attr_index in attribute_indexes:

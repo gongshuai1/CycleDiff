@@ -52,7 +52,7 @@ def discretized_gaussian_log_likelihood(x, *, means, log_scales):
     Compute the log-likelihood of a Gaussian distribution discretizing to a
     given image.
 
-    :param x: the target images. It is assumed that this was uint8 values,
+    :param x: the target images1. It is assumed that this was uint8 values,
               rescaled to the range [-1, 1].
     :param means: the Gaussian mean Tensor.
     :param log_scales: the Gaussian log stddev Tensor.

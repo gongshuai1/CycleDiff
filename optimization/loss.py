@@ -21,7 +21,7 @@ class AttributeLoss(nn.Module):
         using one-hot task code
         :param images: a batch of samples, [b, c, h, w]
         :param attributes: attributes, [b, 20] which '20' denotes the number of attributes
-        :return: images - [b * 20, c, h, w]
+        :return: images1 - [b * 20, c, h, w]
                  task - [b * 20, 20]
                  attributes - [b * 20, 1]
         """

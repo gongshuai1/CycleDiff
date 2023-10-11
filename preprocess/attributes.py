@@ -1,6 +1,6 @@
 """
 Preprocess for attributes
-convert list_attr_celeba.txt to attribute.pt for 30000 images in CelebA-HQ dataset
+convert list_attr_celeba.txt to attribute.pt for 30000 images1 in CelebA-HQ dataset
 """
 import numpy as np
 import os

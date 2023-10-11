@@ -16,10 +16,10 @@ def show_edited_image(
 
 
 def save_video(images_list: List[Image], video_path: str):
-    """Saves a video from a list of images
+    """Saves a video from a list of images1
 
     Args:
-        images_list (List[Image]): A list of PIL images.
+        images_list (List[Image]): A list of PIL images1.
         video_path (str): The path to save to video to.
     """
     images = [np.array(img) for img in images_list]

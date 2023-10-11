@@ -6,9 +6,9 @@ def load_data(
     *, data_dir, batch_size, deterministic=False
 ):
     """
-    For a dataset, create a generator over (images, attributes) pairs.
+    For a dataset, create a generator over (images1, attributes) pairs.
 
-    Each images is an NCHW float tensor, and attributes indicate the features encoded by Resnet50 of each images
+    Each images1 is an NCHW float tensor, and attributes indicate the features encoded by Resnet50 of each images1
 
     :param data_dir: a dataset directory.
     :param batch_size: the batch size of each returned pair.

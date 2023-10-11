@@ -125,7 +125,7 @@ class CelebAHQDataset(torch.utils.data.Dataset):
         super(CelebAHQDataset, self).__init__()
         self.data_dir_path = data_dir_path
 
-        # Count of images
+        # Count of images1
         if not os.path.exists(self.data_dir_path):
             self.length = 0
         else:
@@ -138,7 +138,7 @@ class CelebAHQDataset(torch.utils.data.Dataset):
         # For diffusion - 30000
         file_path = os.path.join(self.data_dir_path, f'%05d.jpg' % index)
 
-        # Load images
+        # Load images1
         with bf.BlobFile(file_path, "rb") as f:
             pil_image = Image.open(f)
             pil_image.load()
@@ -155,7 +155,7 @@ class CelebAHQDataset(torch.utils.data.Dataset):
 
 
 def load_image(file_path):
-    # Load images
+    # Load images1
     with bf.BlobFile(file_path, "rb") as f:
         pil_image = Image.open(f)
         pil_image.load()

@@ -11,7 +11,7 @@ from preprocess.coach import AttributeClassifier
 
 
 def load_image(file_path):
-    # Load images
+    # Load images1
     with bf.BlobFile(file_path, "rb") as f:
         pil_image = Image.open(f)
         pil_image.load()

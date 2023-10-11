@@ -23,7 +23,7 @@ def get_arguments() -> argparse.Namespace:
     )
     parser.add_argument(
         "--paper_sample_output_path", type=str, help="The path to the output",
-        default="/home/gongshuai/con-diffusion/20230528-attribute20/celeba/all_samples/"
+        default="/home/gongshuai/con-diffusion/20230528-attribute20/celeba/all_samples_step/"
     )
 
     # Diffusion
@@ -116,12 +116,12 @@ def get_arguments() -> argparse.Namespace:
 
     # Misc
     parser.add_argument("--seed", type=int, help="The random seed", default=None)
-    parser.add_argument("--gpu_id", type=int, help="The GPU ID", default=4)
-    parser.add_argument("--output_path", type=str, default="/home/gongshuai/con-diffusion/20230528-attribute20/celeba/paper_samples/step-to-step")
+    parser.add_argument("--gpu_id", type=int, help="The GPU ID", default=5)
+    parser.add_argument("--output_path", type=str, default="/home/gongshuai/con-diffusion/20230528-attribute20/celeba/paper_samples")
     parser.add_argument("-o", "--output_file", type=str, help="The filename to save, must be png", default="1.png")
     parser.add_argument("--iterations_num", type=int, help="The number of iterations", default=1)
     parser.add_argument("--batch_size", type=int,
-                        help="The number number if images to sample each diffusion process", default=1)
+                        help="The number number if images1 to sample each diffusion process", default=1)
     parser.add_argument("--vid", help="Indicator for saving the video of the diffusion process",
                         action="store_true", dest="save_video")
     parser.add_argument("--export_assets", help="Indicator for saving raw assets of the prediction",

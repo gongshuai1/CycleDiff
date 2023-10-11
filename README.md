@@ -5,23 +5,18 @@
 Pytorch implementation of **CycleDiff: Facial Semantic Editing Based on Diffusion Model**
 
 
-> Abstract: As a class of generative models, diffusion model has attracted tremendous attention in recent years. Diffusion
-models are able to synthesize near photo-realistic images. While applied to image editing task, most of methods based
-on diffusion model either explicitly introduce a mask for user input during diffusion inference or generate mask before editing and can not achieve attribute-level control. In this paper, we propose CycleDiff, a novel approach to facial semantic editing based on diffusion model. A multi-attribute classifier is used to ensure the consistency of the
-target attribute, and the high-level semantic consistency of the non-target attribute between the edited image and the
-input image is insured by introducing cycle consistency constraint into the inference process. CycleDiff manipulate facial image according to a given attribute label without
-mask (explicitly or implicitly). Experiments on CelebA-HQ dataset achieve convincing results that shows CycleDiff can be made highly effective.
+> Abstract: Diffusion model, as a class of generative model, has become increasing popular in recent years. By utilizing guidance from
+classifier in inference process, diffusion model generates realistic images. while in image editing task based on diffusion
+model, most of methods rely on text guidence or focus on object-level editing. In this paper, we make the first attempt at
+adapting diffusion model to face attribute editing and propose
+an effective diffusion inference method with cycle consistency (CycleDiff), which enables attribute editing with high
+flexibility and fidelity. Specifically, we first introduce a multi-attribute classifier to ensure the consistency of the modified
+image with target attributes. Then, to preserve high-level semantic consistency of faces in input image and edited result,
+we combine cycle consistency with the diffusion inference process and investigate the step length of matching targets in
+cycle consistency, and thereafter present two solutions, i.e.,
+step-by-step and step-to-origin schema. Additionally, a theoretic analysis of these two schemes is given. Experimental results on CelebA-HQ validate the effectiveness of CycleDiff.
 
 
-## Usage
-### Installation
- 1.Create the virtual environment:
-```
-$conda create --name CycleDiff python==3.7
-$conda activate CycleDiff
-$pip install -e .
-```
- 2.Create a checkpoints dictionary and download [the pretrained diffusion model](https://drive.google.com/file/d/1_n1uUfC9muDNYzWKgPsreKPSY-v7GmOS/view?usp=sharing) and [multi-attribute classifier](https://drive.google.com/file/d/1BwVpstO7y19bJw8OFpmTL-ewfRF1y-0D/view?usp=sharing) to this folder.
 
 ### Image manipulate
 Before modify image, you should set image_index and attribute_index in **optimization/attribute_editor.py**.
